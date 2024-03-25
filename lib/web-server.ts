@@ -1,3 +1,4 @@
+import * as cdk from 'aws-cdk-lib';
 import { NestedStack, StackProps } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
@@ -35,47 +36,27 @@ export class WebServerNestedStack extends NestedStack {
                         'utf-8')
                         .replaceAll('${s3BucketName}', props.s3BucketName)
                         .replaceAll('${InternalLB}', props.internalLB)
-    // Create EC2 instance with user data
-    // const userDataScript = ec2.UserData.forLinux();
-    // userDataScript.addCommands(
-    //   `sudo yum update -y`,
-    //   `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash`,
-    //   `export NVM_DIR="$HOME/.nvm"`,
-    //   `[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"`,
-    //   `source ~/.bashrc`,
-    //   `nvm install 16`,
-    //   `nvm use 16`,
-    //   `version=$(node --version)`,
-    //   `cd /home/ec2-user/`,
-    //   `aws s3 cp s3://${props.s3BucketName}/src/web-tier/ web-tier --recursive`,
-    //   `cd /home/ec2-user/web-tier`,
-    //   `npm install`,
-    //   `npm run build`,
-    //   `sudo amazon-linux-extras install nginx1 -y`,
-    //   `cd /etc/nginx`,
-    //   `sudo rm nginx.conf`,
-    //   `sudo aws s3 cp s3://${props.s3BucketName}/src/nginx.conf .`,
-    //   `sudo sed -i "s/INTERNAL-LB-DNS/${props.internalLB}/g" nginx.conf`,
-    //   `sudo service nginx restart`,
-    //   `chmod -R 755 /home/ec2-user`,
-    //   `sudo chkconfig nginx on`
-    // );
     const subnets = props.vpc.publicSubnets;
+
+    const launchTemplate = new ec2.LaunchTemplate(this, 'AppServerLauchTempalte', {
+      machineImage: ec2.MachineImage.latestAmazonLinux2(),
+      securityGroup: props.webTierSG,
+      userData: ec2.UserData.custom(userDataText),
+      instanceType: new ec2.InstanceType('t2.micro'),
+      role: ec2Role,
+    });
 
     // Create auto scaling group
     const autoScalingGroup = new autoscaling.AutoScalingGroup(this, 'AutoScalingGroup', {
       vpc: props.vpc,
-      role: ec2Role,
-      instanceType: new ec2.InstanceType('t2.micro'),
-      machineImage: ec2.MachineImage.latestAmazonLinux2(),
       minCapacity: 1,
       maxCapacity: 1,
       desiredCapacity: 1,
-      associatePublicIpAddress: true,
-      securityGroup: props.webTierSG,
       vpcSubnets: { subnets: subnets },
-      userData: ec2.UserData.custom(userDataText),
-
+      launchTemplate: launchTemplate,
+      healthCheck: autoscaling.HealthCheck.elb({
+        grace: cdk.Duration.minutes(3),
+      })
     });
     autoScalingGroup.scaleOnCpuUtilization('ScaleToCPU', {
       targetUtilizationPercent: 50,
@@ -102,15 +83,6 @@ export class WebServerNestedStack extends NestedStack {
       open: true,
       defaultTargetGroups: [targetGroup]
     });
-
-    // const certificate = acm.Certificate.fromCertificateArn(this, 'Certificate', props.DomainCerArn);
-    // this.loadBalancer.addListener('HttpsListener', {
-    //   port: 443,
-    //   open: true,
-    //   certificates: [certificate],
-    //   defaultTargetGroups: [targetGroup]
-    // });
-
 
   }
 }

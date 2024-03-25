@@ -5,7 +5,6 @@ import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as autoscaling from 'aws-cdk-lib/aws-autoscaling';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager'
 import { readFileSync } from 'fs';
 
 export interface AppServerProps extends StackProps {
@@ -37,7 +36,7 @@ export class AppServerNestedStack extends NestedStack {
     });
 
     const userDataText = readFileSync(this.ServerInitFilePath, 'utf-8')
-      .replaceAll('$s3BucketName', props.s3BucketName)
+      .replaceAll('$S3BucketName', props.s3BucketName)
       .replaceAll('$SECRET_ARN', props.DBSecretArn)
       .replaceAll('$REGION', props.env?.region || 'us-east-1')
 
@@ -47,18 +46,22 @@ export class AppServerNestedStack extends NestedStack {
 
     const subnets = AppTiersubnets.subnets.slice(0, 2);
 
+    const launchTemplate = new ec2.LaunchTemplate(this, 'AppServerLauchTempalte', {
+      machineImage: ec2.MachineImage.latestAmazonLinux2(),
+      securityGroup: props.appTierSG,
+      userData: ec2.UserData.custom(userDataText),
+      instanceType: new ec2.InstanceType('t2.micro'),
+      role: ec2Role,
+    });
+
     // Create auto scaling group
     const autoScalingGroup = new autoscaling.AutoScalingGroup(this, 'AutoScalingGroup', {
       vpc: props.vpc,
-      role: ec2Role,
-      instanceType: new ec2.InstanceType('t2.micro'),
-      machineImage: ec2.MachineImage.latestAmazonLinux2(),
       minCapacity: 1,
       maxCapacity: 1,
       desiredCapacity: 1,
-      securityGroup: props.appTierSG,
       vpcSubnets: { subnets: subnets },
-      userData: ec2.UserData.custom(userDataText),
+      launchTemplate: launchTemplate,
       healthCheck: autoscaling.HealthCheck.elb({
         grace: cdk.Duration.minutes(3),
       })
