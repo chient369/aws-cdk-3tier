@@ -1,15 +1,39 @@
-# Welcome to your CDK TypeScript project
+## Deploy
 
-You should explore the contents of this project. It demonstrates a CDK app with an instance of a stack (`SampleCdkStack`)
-which contains an Amazon SQS queue that is subscribed to an Amazon SNS topic.
+1. First, install dependencies:
+   ```bash
+   npm install
+   ```
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+2. Configuration Parameters:
+
+   Before deploying, make sure to set the following configuration parameters:
+   - Account ID
+   - Certificate ARN
+   - Domain Name
+   - Hosted zone name
+   - Hosted zone ID
+
+3. Bootstrap:
+   ```bash
+   cdk bootstrap
+   ```
+
+4. Synthesize:
+   ```bash
+   cdk synth
+   ```
+
+5. Deploy:
+   ```bash
+   cdk deploy
+   ```
 
 ## Useful commands
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+- `npm run build`: Compile TypeScript to JavaScript.
+- `npm run watch`: Watch for changes and compile.
+- `npm run test`: Perform Jest unit tests.
+- `cdk deploy`: Deploy this stack to your default AWS account/region.
+- `cdk diff`: Compare deployed stack with current state.
+- `cdk synth`: Emit the synthesized CloudFormation template.
