@@ -5,7 +5,8 @@ import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as autoscaling from 'aws-cdk-lib/aws-autoscaling';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import {readFileSync} from 'fs';
+import { readFileSync } from 'fs';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 
 
 export interface WebServerProps extends StackProps {
@@ -32,10 +33,10 @@ export class WebServerNestedStack extends NestedStack {
       ],
     });
     const userDataText = readFileSync(
-                        this.ServerInitFilePath, 
-                        'utf-8')
-                        .replaceAll('${s3BucketName}', props.s3BucketName)
-                        .replaceAll('${InternalLB}', props.internalLB)
+      this.ServerInitFilePath,
+      'utf-8')
+      .replaceAll('${s3BucketName}', props.s3BucketName)
+      .replaceAll('${InternalLB}', props.internalLB)
     const subnets = props.vpc.publicSubnets;
 
     const launchTemplate = new ec2.LaunchTemplate(this, 'AppServerLauchTempalte', {
@@ -81,6 +82,14 @@ export class WebServerNestedStack extends NestedStack {
     this.loadBalancer.addListener('HttpListener', {
       port: 80,
       open: true,
+      defaultTargetGroups: [targetGroup]
+    });
+
+    const certificate = acm.Certificate.fromCertificateArn(this, 'Certificate', props.DomainCerArn);
+    this.loadBalancer.addListener('HttpsListener', {
+      port: 443,
+      open: true,
+      certificates: [certificate],
       defaultTargetGroups: [targetGroup]
     });
 
