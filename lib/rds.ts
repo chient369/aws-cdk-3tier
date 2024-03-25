@@ -69,6 +69,7 @@ export class RdsNestedStack extends NestedStack {
       engine: dbEngine,
       iamAuthentication: false,
       clusterIdentifier: props.RDSClusterName,
+      defaultDatabaseName: props.DatabaseName,
       subnetGroup: subnetGroup,
       writer: rds.ClusterInstance.provisioned('writer',{
         instanceType: new ec2.InstanceType(`${props.DBInstanceType}`),
