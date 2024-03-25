@@ -17,7 +17,7 @@ echo "Init DB of demo data ..."
 mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD <<EOF
  CREATE DATABASE IF NOT EXISTS $DB_NAME;
  USE $DB_NAME;
- CREATE TABLE IF NOT EXISTS transactions(id INT NOT NULL AUTO_INCREMENT, amount DECIMAL(102), description VARCHAR(100), PRIMARY KEY(id));
+ CREATE TABLE IF NOT EXISTS transactions(id INT NOT NULL AUTO_INCREMENT, amount DECIMAL(6), description VARCHAR(100), PRIMARY KEY(id));
  INSERT INTO transactions (amount,description) VALUES ('400','groceries');   
  SELECT * FROM transactions;
 EOF
