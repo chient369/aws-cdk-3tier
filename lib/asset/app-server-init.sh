@@ -17,8 +17,8 @@ echo "Init DB of demo data ..."
 mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD <<EOF
  CREATE DATABASE IF NOT EXISTS $DB_NAME;
  USE $DB_NAME;
- CREATE TABLE IF NOT EXISTS transactions(id INT NOT NULL AUTO_INCREMENT amount DECIMAL(102) description VARCHAR(100) PRIMARY KEY(id));
- INSERT INTO transactions (amountdescription) VALUES ('400''groceries');   
+ CREATE TABLE IF NOT EXISTS transactions(id INT NOT NULL AUTO_INCREMENT, amount DECIMAL(102), description VARCHAR(100), PRIMARY KEY(id));
+ INSERT INTO transactions (amount,description) VALUES ('400','groceries');   
  SELECT * FROM transactions;
 EOF
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
@@ -31,7 +31,7 @@ version=$(node --version)
 node -e "console.log('Running Node.js ' + process.version)"
 npm install -g pm2
 cd /home/ec2-user
-aws s3 cp s3://${s3BucketName}/app-tier/ app-tier --recursive
+aws s3 cp s3://$S3BucketName/app-tier/ app-tier --recursive
 cd /home/ec2-user/app-tier
 echo "Updating environment variables..."
 sudo sed -i "s/DB_ENDPOINT/$DB_HOST/g" DbConfig.js
